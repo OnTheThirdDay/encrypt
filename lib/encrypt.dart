@@ -18,6 +18,8 @@ part 'src/algorithms/fernet.dart';
 
 part 'src/algorithms/rsa.dart';
 
+part 'src/algorithms/rsa_reversed.dart';
+
 part 'src/algorithms/salsa20.dart';
 
 part 'src/encrypted.dart';
