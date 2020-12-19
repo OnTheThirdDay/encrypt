@@ -1,27 +1,8 @@
 part of encrypt;
 
-// Abstract class for encryption and signing.
-abstract class AbstractRSA {
-  final RSAPublicKey publicKey;
-  final RSAPrivateKey privateKey;
-  final PublicKeyParameter<RSAPublicKey> _publicKeyParams;
-  final PrivateKeyParameter<RSAPrivateKey> _privateKeyParams;
-  final AsymmetricBlockCipher _cipher;
-
-  AbstractRSA({
-    this.publicKey,
-    this.privateKey,
-    RSAEncoding encoding = RSAEncoding.PKCS1,
-  })  : this._publicKeyParams = PublicKeyParameter(publicKey),
-        this._privateKeyParams = PrivateKeyParameter(privateKey),
-        this._cipher = encoding == RSAEncoding.OAEP
-            ? OAEPEncoding(RSAEngine())
-            : PKCS1Encoding(RSAEngine());
-}
-
 /// Wraps the RSA Engine Algorithm.
 class RSAReversed extends AbstractRSA implements Algorithm {
-  RSA(
+  RSAReversed(
       {RSAPublicKey publicKey,
       RSAPrivateKey privateKey,
       RSAEncoding encoding = RSAEncoding.PKCS1})
@@ -54,12 +35,12 @@ class RSAReversed extends AbstractRSA implements Algorithm {
   }
 }
 
-class RSASigner extends AbstractRSA implements SignerAlgorithm {
+class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
   final RSASignDigest digest;
   final Uint8List _digestId;
   final Digest _digestCipher;
 
-  RSASigner(this.digest, {RSAPublicKey publicKey, RSAPrivateKey privateKey})
+  RSAReversedSigner(this.digest, {RSAPublicKey publicKey, RSAPrivateKey privateKey})
       : _digestId = _digestIdFactoryMap[digest].id,
         _digestCipher = _digestIdFactoryMap[digest].factory(),
         super(publicKey: publicKey, privateKey: privateKey);
@@ -160,101 +141,3 @@ class RSASigner extends AbstractRSA implements SignerAlgorithm {
   }
 }
 
-enum RSAEncoding {
-  PKCS1,
-  OAEP,
-}
-
-enum RSASignDigest {
-  SHA256,
-}
-
-final _digestIdFactoryMap = <RSASignDigest, _DigestIdFactory>{
-  RSASignDigest.SHA256: _DigestIdFactory(
-      _hexToBytes('0609608648016503040201'), () => SHA256Digest())
-};
-
-class _DigestIdFactory {
-  final Uint8List id;
-  final Digest Function() factory;
-
-  _DigestIdFactory(this.id, this.factory);
-}
-
-/// RSA PEM parser.
-class RSAKeyParser {
-  /// Parses the PEM key no matter it is public or private, it will figure it out.
-  RSAAsymmetricKey parse(String key) {
-    final rows = key.split(RegExp(r'\r\n?|\n'));
-    final header = rows.first;
-
-    if (header == '-----BEGIN RSA PUBLIC KEY-----') {
-      return _parsePublic(_parseSequence(rows));
-    }
-
-    if (header == '-----BEGIN PUBLIC KEY-----') {
-      return _parsePublic(_pkcs8PublicSequence(_parseSequence(rows)));
-    }
-
-    if (header == '-----BEGIN RSA PRIVATE KEY-----') {
-      return _parsePrivate(_parseSequence(rows));
-    }
-
-    if (header == '-----BEGIN PRIVATE KEY-----') {
-      return _parsePrivate(_pkcs8PrivateSequence(_parseSequence(rows)));
-    }
-
-    throw FormatException('Unable to parse key, invalid format.', header);
-  }
-
-  RSAAsymmetricKey _parsePublic(ASN1Sequence sequence) {
-    final modulus = (sequence.elements[0] as ASN1Integer).valueAsBigInteger;
-    final exponent = (sequence.elements[1] as ASN1Integer).valueAsBigInteger;
-
-    return RSAPublicKey(modulus, exponent);
-  }
-
-  RSAAsymmetricKey _parsePrivate(ASN1Sequence sequence) {
-    final modulus = (sequence.elements[1] as ASN1Integer).valueAsBigInteger;
-    final exponent = (sequence.elements[3] as ASN1Integer).valueAsBigInteger;
-    final p = (sequence.elements[4] as ASN1Integer).valueAsBigInteger;
-    final q = (sequence.elements[5] as ASN1Integer).valueAsBigInteger;
-
-    return RSAPrivateKey(modulus, exponent, p, q);
-  }
-
-  ASN1Sequence _parseSequence(List<String> rows) {
-    final keyText = rows
-        .skipWhile((row) => row.startsWith('-----BEGIN'))
-        .takeWhile((row) => !row.startsWith('-----END'))
-        .map((row) => row.trim())
-        .join('');
-
-    final keyBytes = Uint8List.fromList(convert.base64.decode(keyText));
-    final asn1Parser = ASN1Parser(keyBytes);
-
-    return asn1Parser.nextObject() as ASN1Sequence;
-  }
-
-  ASN1Sequence _pkcs8PublicSequence(ASN1Sequence sequence) {
-    final ASN1Object bitString = sequence.elements[1];
-    final bytes = bitString.valueBytes().sublist(1);
-    final parser = ASN1Parser(Uint8List.fromList(bytes));
-
-    return parser.nextObject() as ASN1Sequence;
-  }
-
-  ASN1Sequence _pkcs8PrivateSequence(ASN1Sequence sequence) {
-    final ASN1Object bitString = sequence.elements[2];
-    final bytes = bitString.valueBytes();
-    final parser = ASN1Parser(bytes);
-
-    return parser.nextObject() as ASN1Sequence;
-  }
-}
-
-Uint8List _hexToBytes(String encoded) => (Uint8List.fromList(List.generate(
-        encoded.length, (i) => i % 2 == 0 ? encoded.substring(i, i + 2) : null)
-    .where((b) => b != null)
-    .map((b) => int.parse(b, radix: 16))
-    .toList()));
