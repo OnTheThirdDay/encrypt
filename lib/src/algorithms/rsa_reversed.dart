@@ -2,14 +2,11 @@ part of encrypt;
 
 /// Wraps the RSA Engine Algorithm.
 class RSAReversed extends AbstractRSA implements Algorithm {
-  RSAReversed(
-      {RSAPublicKey publicKey,
-      RSAPrivateKey privateKey,
-      RSAEncoding encoding = RSAEncoding.PKCS1})
+  RSAReversed({RSAPublicKey publicKey, RSAPrivateKey privateKey, RSAEncoding encoding = RSAEncoding.PKCS1})
       : super(publicKey: publicKey, privateKey: privateKey, encoding: encoding);
 
   @override
-  Encrypted encrypt(Uint8List bytes, {IV iv}) {
+  Encrypted encrypt(Uint8List bytes, {IV? iv}) {
     if (privateKey == null) {
       throw StateError('Can\'t encrypt without a private key, null given.');
     }
@@ -22,7 +19,7 @@ class RSAReversed extends AbstractRSA implements Algorithm {
   }
 
   @override
-  Uint8List decrypt(Encrypted encrypted, {IV iv}) {
+  Uint8List decrypt(Encrypted encrypted, {IV? iv}) {
     if (publicKey == null) {
       throw StateError('Can\'t decrypt without a public key, null given.');
     }
@@ -77,8 +74,7 @@ class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
     var _signature = Uint8List(_cipher.outputBlockSize);
 
     try {
-      final length = _cipher.processBlock(
-          signature.bytes, 0, signature.bytes.length, _signature, 0);
+      final length = _cipher.processBlock(signature.bytes, 0, signature.bytes.length, _signature, 0);
       _signature = _signature.sublist(0, length);
     } on ArgumentError {
       return false;
@@ -118,8 +114,7 @@ class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
   }
 
   Uint8List _encode(Uint8List hash) {
-    final digestBytes =
-        Uint8List(2 + 2 + _digestId.length + 2 + 2 + hash.length);
+    final digestBytes = Uint8List(2 + 2 + _digestId.length + 2 + 2 + hash.length);
     var i = 0;
 
     digestBytes[i++] = 48;
@@ -140,4 +135,3 @@ class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
     return digestBytes;
   }
 }
-
