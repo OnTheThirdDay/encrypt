@@ -2,7 +2,7 @@ part of encrypt;
 
 /// Wraps the RSA Engine Algorithm.
 class RSAReversed extends AbstractRSA implements Algorithm {
-  RSAReversed({RSAPublicKey publicKey, RSAPrivateKey privateKey, RSAEncoding encoding = RSAEncoding.PKCS1})
+  RSAReversed({RSAPublicKey? publicKey, RSAPrivateKey? privateKey, RSAEncoding encoding = RSAEncoding.PKCS1})
       : super(publicKey: publicKey, privateKey: privateKey, encoding: encoding);
 
   @override
@@ -37,7 +37,7 @@ class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
   final Uint8List _digestId;
   final Digest _digestCipher;
 
-  RSAReversedSigner(this.digest, {RSAPublicKey publicKey, RSAPrivateKey privateKey})
+  RSAReversedSigner(this.digest, {RSAPublicKey? publicKey, RSAPrivateKey? privateKey})
       : _digestId = _digestIdFactoryMap[digest].id,
         _digestCipher = _digestIdFactoryMap[digest].factory(),
         super(publicKey: publicKey, privateKey: privateKey);
