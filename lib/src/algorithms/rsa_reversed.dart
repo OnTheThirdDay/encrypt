@@ -13,7 +13,7 @@ class RSAReversed extends AbstractRSA implements Algorithm {
 
     _cipher
       ..reset()
-      ..init(true, _privateKeyParams);
+      ..init(true, _privateKeyParams!);
 
     return Encrypted(_cipher.process(bytes));
   }
@@ -26,7 +26,7 @@ class RSAReversed extends AbstractRSA implements Algorithm {
 
     _cipher
       ..reset()
-      ..init(false, _publicKeyParams);
+      ..init(false, _publicKeyParams!);
 
     return _cipher.process(encrypted.bytes);
   }
@@ -38,8 +38,8 @@ class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
   final Digest _digestCipher;
 
   RSAReversedSigner(this.digest, {RSAPublicKey? publicKey, RSAPrivateKey? privateKey})
-      : _digestId = _digestIdFactoryMap[digest].id,
-        _digestCipher = _digestIdFactoryMap[digest].factory(),
+      : _digestId = _digestIdFactoryMap[digest]!.id,
+        _digestCipher = _digestIdFactoryMap[digest]!.factory(),
         super(publicKey: publicKey, privateKey: privateKey);
 
   @override
@@ -53,7 +53,7 @@ class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
 
     _cipher
       ..reset()
-      ..init(true, _publicKeyParams);
+      ..init(true, _publicKeyParams!);
 
     return Encrypted(_cipher.process(_encode(hash)));
   }
@@ -69,7 +69,7 @@ class RSAReversedSigner extends AbstractRSA implements SignerAlgorithm {
 
     _cipher
       ..reset()
-      ..init(false, _privateKeyParams);
+      ..init(false, _privateKeyParams!);
 
     var _signature = Uint8List(_cipher.outputBlockSize);
 
